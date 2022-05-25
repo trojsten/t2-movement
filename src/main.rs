@@ -61,9 +61,9 @@ fn process_client(mut stream: TcpStream, movement: &mut Movement) -> Result<()> 
     stream.read(&mut buf)?;
 
     let command = match buf[0] {
-        1 => Command::Up,
-        2 => Command::Down,
-        3 => Command::Stop,
+        1 | b'u' => Command::Up,
+        2 | b'd' => Command::Down,
+        3 | b's' => Command::Stop,
         _ => {
             stream.write(&[1u8])?;
             return Ok(());
