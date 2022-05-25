@@ -1,1 +1,1 @@
-For example `echo -ne '\1' | netcat 10.3.0.16 1113`
+For example `echo u | netcat 10.3.0.16 1113`
