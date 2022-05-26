@@ -42,7 +42,7 @@ impl Movement {
         let pin = self.get_pin(cmd);
         pin.set_direction(Direction::High)?;
         // pin.set_value(1)?;
-        sleep(Duration::from_millis(1500));
+        sleep(Duration::from_millis(250));
         pin.set_direction(Direction::In)?;
         eprintln!("Done");
         Ok(())
