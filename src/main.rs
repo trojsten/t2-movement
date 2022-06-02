@@ -1,9 +1,9 @@
-use anyhow::Result;
 use std::io::prelude::*;
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread::sleep;
 use std::time::Duration;
 
+use anyhow::Result;
 use rppal::gpio::{Gpio, IoPin, Mode};
 
 struct Movement {
@@ -58,14 +58,14 @@ enum Command {
 
 fn process_client(mut stream: TcpStream, movement: &mut Movement) -> Result<()> {
     let mut buf = [0u8; 1];
-    stream.read(&mut buf)?;
+    stream.read_exact(&mut buf)?;
 
     let command = match buf[0] {
         1 | b'u' => Command::Up,
         2 | b'd' => Command::Down,
         3 | b's' => Command::Stop,
         _ => {
-            stream.write(&[1u8])?;
+            stream.write_all(&[1u8])?;
             return Ok(());
         }
     };
