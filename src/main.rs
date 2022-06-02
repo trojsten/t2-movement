@@ -1,49 +1,49 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::io::prelude::*;
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread::sleep;
 use std::time::Duration;
 
-use sysfs_gpio::{Direction, Pin};
+use rppal::gpio::{Gpio, IoPin, Mode};
 
 struct Movement {
-    pin_up: Pin,
-    pin_down: Pin,
-    pin_stop: Pin,
+    pin_up: IoPin,
+    pin_down: IoPin,
+    pin_stop: IoPin,
 }
 
-fn make_pin(pin: u64) -> Result<Pin> {
-    let p = Pin::new(pin);
-    p.export()?;
-    p.set_direction(Direction::In)
-        .context("set pin direction")?;
-    Ok(p)
+fn make_pin(gpio: &Gpio, pin: u8) -> Result<IoPin> {
+    let pin = gpio.get(pin)?;
+    let mut pin = pin.into_io(Mode::Input);
+    pin.set_pullupdown(rppal::gpio::PullUpDown::Off);
+    Ok(pin)
 }
 
 impl Movement {
-    fn new(up: u64, down: u64, stop: u64) -> Result<Self> {
+    fn new(up: u8, down: u8, stop: u8) -> Result<Self> {
+        let gpio = Gpio::new()?;
         Ok(Self {
-            pin_up: make_pin(up)?,
-            pin_down: make_pin(down)?,
-            pin_stop: make_pin(stop)?,
+            pin_up: make_pin(&gpio, up)?,
+            pin_down: make_pin(&gpio, down)?,
+            pin_stop: make_pin(&gpio, stop)?,
         })
     }
 
-    fn get_pin(&self, cmd: Command) -> Pin {
+    fn get_pin(&mut self, cmd: Command) -> &mut IoPin {
         match cmd {
-            Command::Up => self.pin_up,
-            Command::Down => self.pin_down,
-            Command::Stop => self.pin_stop,
+            Command::Up => &mut self.pin_up,
+            Command::Down => &mut self.pin_down,
+            Command::Stop => &mut self.pin_stop,
         }
     }
 
     pub fn perform_command(&mut self, cmd: Command) -> Result<()> {
         eprintln!("Performing command: {:?}", cmd);
         let pin = self.get_pin(cmd);
-        pin.set_direction(Direction::High)?;
-        // pin.set_value(1)?;
+
+        pin.set_pullupdown(rppal::gpio::PullUpDown::PullUp);
         sleep(Duration::from_millis(250));
-        pin.set_direction(Direction::In)?;
+        pin.set_pullupdown(rppal::gpio::PullUpDown::Off);
         eprintln!("Done");
         Ok(())
     }
